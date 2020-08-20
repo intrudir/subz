@@ -9,6 +9,8 @@ You need the following subdomain recon tools installed and in your PATH:
   - https://github.com/projectdiscovery/subfinder
 - Assetfinder
   - https://github.com/tomnomnom/assetfinder
+- Chaos
+  - https://github.com/projectdiscovery/chaos-client
 
 # Usage:
 ```bash
