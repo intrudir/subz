@@ -15,6 +15,8 @@ if not len(sys.argv) > 1:
 	print()
 	exit()
 
+outputFile = ''
+
 ports = (
 '80,81,300,443,591,593,832,981,1010,1311,2082,2087,2095,2096,2480,3000,3128,3333,4243,4567,4711,4712,\
 4993,5000,5104,5108,5800,6543,7000,7396,7474,8000,8001,8008,8014,8042,8069,8080,8081,8088,8090,8091,\
@@ -22,14 +24,18 @@ ports = (
 9200,9443,9800,9981,12443,16080,18091,18092,20720,28017'
 )
 
-def scanner(args, cmd, outputFile):
+def scanner(args, tool, cmd, outputFile):
+	scanStart=datetime.now()
+
 	if args.verbose:
 		print("Executing command: {}".format(cmd))
 	cmdargs = shlex.split(cmd)
 	cmdOutput = subprocess.check_output(cmdargs, encoding='UTF-8')
-	if cmd.find('assetfinder') != -1:
+	if tool == 'assetfinder':
 		with open(outputFile, "w") as f:
 			f.write(cmdOutput)
+
+	logger.info("\n{} data retrieval completed in: {}\n".format(tool, datetime.now()-scanStart))
 
 ### Start the script timer
 scriptStart=datetime.now()
@@ -43,29 +49,23 @@ format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-### Amass
-scanStart=datetime.now()
 ### may exit with non-zero error code. It may still have results. We can have it continue anyway.
-outputFile = "amass.{}.txt".format(args.target)
+tool = 'amass'
+outputFile = "{}.{}.txt".format(tool, args.target)
 cmd = "amass enum -active -brute -ipv4 -p {} -src -d {} -o {}".format(ports, args.target, outputFile)
 try:
-	scanner(args, cmd, outputFile)
+	scanner(args, tool, cmd, outputFile)
 except subprocess.CalledProcessError as e:
 	logger.warning(e)
-logger.info("\nAmass data retrieval completed in: {}\n".format(datetime.now()-scanStart))
 
-### assetfinder
-scanStart=datetime.now()
-outputFile = "assetfinder.{}.txt".format(args.target)
+tool = 'assetfinder'
+outputFile = "{}.{}.txt".format(tool, args.target)
 cmd = "assetfinder --subs-only {}".format(args.target)
-scanner(args, cmd, outputFile)
-logger.info("\nAssetfinder data retrieval completed in: {}\n".format(datetime.now()-scanStart))
+scanner(args, tool, cmd, outputFile)
 
-### subfinder
-scanStart=datetime.now()
-outputFile = "subfinder.{}.txt".format(args.target)
+tool = 'subfinder'
+outputFile = "{}.{}.txt".format(tool, args.target)
 cmd = "subfinder -d {} -o {}".format(args.target, outputFile)
-scanner(args, cmd, outputFile)
-logger.info("\nSubfinder data retrieval completed in: {}\n".format(datetime.now()-scanStart))
+scanner(args, tool, cmd, outputFile)
 
 print ("\nAll data retrieval completed in: {}\n".format(datetime.now()-scriptStart))
