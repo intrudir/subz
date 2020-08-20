@@ -46,7 +46,7 @@ logger.setLevel(logging.INFO)
 ### Amass
 scanStart=datetime.now()
 ### may exit with non-zero error code. It may still have results. We can have it continue anyway.
-outputFile = "amass2.{}.txt".format(args.target)
+outputFile = "amass.{}.txt".format(args.target)
 cmd = "amass enum -active -brute -ipv4 -p {} -src -d {} -o {}".format(ports, args.target, outputFile)
 try:
 	scanner(args, cmd, outputFile)
@@ -56,14 +56,14 @@ logger.info("\nAmass data retrieval completed in: {}\n".format(datetime.now()-sc
 
 ### assetfinder
 scanStart=datetime.now()
-outputFile = "assetfinder2.{}.txt".format(args.target)
+outputFile = "assetfinder.{}.txt".format(args.target)
 cmd = "assetfinder --subs-only {}".format(args.target)
 scanner(args, cmd, outputFile)
 logger.info("\nAssetfinder data retrieval completed in: {}\n".format(datetime.now()-scanStart))
 
 ### subfinder
 scanStart=datetime.now()
-outputFile = "subfinder2.{}.txt".format(args.target)
+outputFile = "subfinder.{}.txt".format(args.target)
 cmd = "subfinder -d {} -o {}".format(args.target, outputFile)
 scanner(args, cmd, outputFile)
 logger.info("\nSubfinder data retrieval completed in: {}\n".format(datetime.now()-scanStart))
