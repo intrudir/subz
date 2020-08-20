@@ -31,7 +31,7 @@ def scanner(args, tool, cmd, outputFile):
 		print("Executing command: {}".format(cmd))
 	cmdargs = shlex.split(cmd)
 	cmdOutput = subprocess.check_output(cmdargs, encoding='UTF-8')
-	if tool == 'assetfinder':
+	if tool == 'assetfinder' or tool == 'chaos':
 		with open(outputFile, "w") as f:
 			f.write(cmdOutput)
 
@@ -66,6 +66,11 @@ scanner(args, tool, cmd, outputFile)
 tool = 'subfinder'
 outputFile = "{}.{}.txt".format(tool, args.target)
 cmd = "subfinder -d {} -o {}".format(args.target, outputFile)
+scanner(args, tool, cmd, outputFile)
+
+tool = 'chaos'
+outputFile = "{}.{}.txt".format(tool, args.target)
+cmd = "chaos -d {} -silent".format(args.target)
 scanner(args, tool, cmd, outputFile)
 
 print ("\nAll data retrieval completed in: {}\n".format(datetime.now()-scriptStart))
