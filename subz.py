@@ -41,10 +41,13 @@ def scanner(args, tool, cmd, outputFile):
 scriptStart=datetime.now()
 
 ### Set the logger up
-if not os.path.exists('logs'):
-    os.makedirs('logs')
-logfileName = "logs/logs.log"
-logging.basicConfig(filename=logfileName, filemode='a',
+scriptDir = os.path.dirname(__file__)
+logDir = scriptDir + '/logs'
+if not os.path.exists(logDir):
+	os.makedirs(logDir)
+logName = "logs.log"
+logfilePath = os.path.join(logDir, logName)
+logging.basicConfig(filename=logfilePath, filemode='a',
 format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
