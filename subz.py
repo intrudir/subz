@@ -106,8 +106,11 @@ def bbrecon(args):
 def makeFinal(args, outFiles):
 	domains = []
 	for of in outFiles:
-		with open(of, 'r') as of:
-			data = of.read().splitlines()
+		try:
+			with open(of, 'r') as of:
+				data = of.read().splitlines()
+		except FileNotFoundError:
+			pass
 		for i in data:
 			matches = re.findall(r'(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}', urllib.parse.unquote(urllib.parse.unquote(i)))
 			for m in matches:
