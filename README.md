@@ -42,7 +42,7 @@ optional arguments:
 
 ## Display In-scope web app assets
 Pulls from HackerOne using valid slug. <br>
-Slug is usually the endpoint used to reach the scope page for the program. e.g. 
+Slug is usually the endpoint used to reach the scope page for the program. e.g. https://hackerone.com/paypal
 ```bash
 python3 subz.py -s paypal
 ```
