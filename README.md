@@ -16,8 +16,9 @@ You need the following subdomain recon tools installed and in your PATH:
 - BBRecon API key
   - https://bugbountyrecon.com/
   - Add the API key into BBR_API_KEY  in the script.
+<br>
 
-
+---
 # Usage:
 ```bash
 usage: subz.py [-h] [-t TARGET] [-s SCOPE] [-d] [-v]
@@ -46,6 +47,7 @@ Slug is usually the endpoint used to reach the scope page for the program. e.g.
 python3 subz.py -s paypal
 ```
 ![image](https://user-images.githubusercontent.com/24526564/90984072-cab8d580-e540-11ea-8181-1250181f7f72.png)
+
 <br>
 
 ## Create directories based on the in-scope web assets
