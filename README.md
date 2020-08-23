@@ -56,3 +56,14 @@ Requires the `-s` flag
 python3 subz.py -s paypal -d
 ```
 ![image](https://user-images.githubusercontent.com/24526564/90984506-651a1880-e543-11ea-969a-fc2eba3cd620.png)
+
+<br>
+
+## Enumerate subdomains for specified target domain.
+- Add `-v` for verbosity. Lets you see what command is running for each tool.
+- Will use Amass, Assetfinder Subfinder, Chaos for subdomain enumeration.
+- The results will be output files for each tool.
+```bash
+python3 subz.py -t paypal.me
+```
+![image](https://user-images.githubusercontent.com/24526564/90984619-128d2c00-e544-11ea-974e-88c483535650.png)
