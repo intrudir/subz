@@ -62,8 +62,8 @@ python3 subz.py -s paypal -d
 ## Enumerate subdomains for specified target domain.
 - Add `-v` for verbosity. Lets you see what command is running for each tool.
 - Will use Amass, Assetfinder Subfinder, Chaos for subdomain enumeration.
-- The results will be output files for each tool.
+- The results will be output files for each tool. There will be a `final.{target}.txt` file with everything sorted and deduped for you in 1 file :)
 ```bash
 python3 subz.py -t paypal.me
 ```
-![image](https://user-images.githubusercontent.com/24526564/90984619-128d2c00-e544-11ea-974e-88c483535650.png)
+![image](https://user-images.githubusercontent.com/24526564/90985848-90edcc00-e54c-11ea-9e20-6569de23d6b7.png)
