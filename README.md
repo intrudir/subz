@@ -37,3 +37,20 @@ optional arguments:
                         from HackerOne. Requires '-s' flag.'
   -v, --verbose         Enable slightly more verbose console output
 ```
+<br>
+
+## Display In-scope web app assets
+Pulls from HackerOne using valid slug. <br>
+Slug is usually the endpoint used to reach the scope page for the program. e.g. 
+```bash
+python3 subz.py -s paypal
+```
+![image](https://user-images.githubusercontent.com/24526564/90984072-cab8d580-e540-11ea-8181-1250181f7f72.png)
+<br>
+
+## Create directories based on the in-scope web assets
+Requires the `-s` flag
+```bash
+python3 subz.py -s paypal -d
+```
+![image](https://user-images.githubusercontent.com/24526564/90984506-651a1880-e543-11ea-969a-fc2eba3cd620.png)
