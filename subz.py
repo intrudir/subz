@@ -1,5 +1,5 @@
 from datetime import date, datetime
-import requests, os, sys, shlex, subprocess, argparse, logging, pprint
+import re, requests, os, sys, shlex, subprocess, argparse, logging, urllib.parse
 
 # Modify these if needed
 BBR_API_KEY = "bbrecon api key here"
@@ -10,13 +10,13 @@ ports = (
 9200,9443,9800,9981,12443,16080,18091,18092,20720,28017')
 
 parser = argparse.ArgumentParser(
-description="This script will enumerate subdomains of your target TLD. e.g. paypal.com")
+description="Programatically uses a few subdomain recon tools to enumerate subdomains for a target domain")
 parser.add_argument('-t','--target', action="store", default=None, dest='target',
 	help="Specify the single domain you'd like to enumerate subdomains for. e.g. uber.com")
 parser.add_argument('-s','--scope', action="store", default=None, dest='scope',
 	help="Display the in-scope web assets from HackerOne. Specify slug. e.g. 'yelp' or 'verizonmedia'")
 parser.add_argument('-d','--mkdirs', action="store_true", default=False, dest='mkdirs',
-	help="Create directory structure using in-scope web assets from HackerOne.'")
+	help="Create directory structure using in-scope web assets from HackerOne. Requires '-s' flag.'")
 parser.add_argument('-v','--verbose', action="store_true", default=False, dest='verbose',
 	help="Enable slightly more verbose console output")
 args = parser.parse_args()
@@ -40,18 +40,22 @@ def scanner(args, tool, cmd, outputFile):
 	logger.info("\n{} data retrieval completed in: {}\n".format(tool, datetime.now()-scanStart))
 
 def enumerateSubs():
+	outFiles = []
 	tool = 'assetfinder'
 	outputFile = "{}.{}.txt".format(tool, args.target)
+	outFiles.append(outputFile)
 	cmd = "assetfinder --subs-only {}".format(args.target)
 	scanner(args, tool, cmd, outputFile)
 
 	tool = 'subfinder'
 	outputFile = "{}.{}.txt".format(tool, args.target)
+	outFiles.append(outputFile)
 	cmd = "subfinder -d {} -o {}".format(args.target, outputFile)
 	scanner(args, tool, cmd, outputFile)
 
 	tool = 'chaos'
 	outputFile = "{}.{}.txt".format(tool, args.target)
+	outFiles.append(outputFile)
 	cmd = "chaos -d {} -silent".format(args.target)
 	try:
 		scanner(args, tool, cmd, outputFile)
@@ -63,6 +67,7 @@ def enumerateSubs():
 	### may exit with non-zero error code. It may still have results. We can have it continue anyway.
 	tool = 'amass'
 	outputFile = "{}.{}.txt".format(tool, args.target)
+	outFiles.append(outputFile)
 	cmd = "amass enum -active -brute -ipv4 -p {} -src -d {} -o {}".format(ports, args.target, outputFile)
 	try:
 		scanner(args, tool, cmd, outputFile)
@@ -70,10 +75,10 @@ def enumerateSubs():
 		logger.warning(e)
 
 	print ("\nAll data retrieval completed in: {}\n".format(datetime.now()-scriptStart))
+	return outFiles
 
 def bbrecon(args):
 	makeDirs = []
-	pp = pprint.PrettyPrinter(indent=1)
 	program = args.scope
 
 	url = "https://api.bugbountyrecon.com:443/v0b/programs/{}".format(program)
@@ -98,6 +103,21 @@ def bbrecon(args):
 
 	return makeDirs
 
+def makeFinal(args, outFiles):
+	domains = []
+	for of in outFiles:
+		with open(of, 'r') as of:
+			data = of.read().splitlines()
+		for i in data:
+			matches = re.findall(r'(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,6}', urllib.parse.unquote(urllib.parse.unquote(i)))
+			for m in matches:
+				domains.append(m)
+	finalDomains = sorted(set(domains))
+
+	with open('final.{}.txt'.format(args.target), 'w') as ff:
+		for fd in finalDomains:
+			ff.write('{}\n'.format(fd))
+
 
 ### Start the script timer
 scriptStart=datetime.now()
@@ -116,7 +136,8 @@ logger.setLevel(logging.INFO)
 
 if args.target and not args.scope:
 	outputFile = '' # dont change this
-	enumerateSubs()
+	outFiles = enumerateSubs()
+	makeFinal(args, outFiles)
 
 if args.scope and not args.target:
 	dirs = bbrecon(args)
