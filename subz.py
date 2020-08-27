@@ -1,14 +1,6 @@
 from datetime import date, datetime
 import re, requests, os, sys, shlex, subprocess, argparse, logging, urllib.parse
 
-# Modify these if needed
-BBR_API_KEY = "bbrecon api key here"
-ports = (
-'80,81,300,443,591,593,832,981,1010,1311,2082,2087,2095,2096,2480,3000,3128,3333,4243,4567,4711,4712,\
-4993,5000,5104,5108,5800,6543,7000,7396,7474,8000,8001,8008,8014,8042,8069,8080,8081,8088,8090,8091,\
-8118,8123,8172,8222,8243,8280,8281,8333,8443,8500,8834,8880,8888,8983,9000,9043,9060,9080,9090,9091,\
-9200,9443,9800,9981,12443,16080,18091,18092,20720,28017')
-
 parser = argparse.ArgumentParser(
 description="Programatically uses a few subdomain recon tools to enumerate subdomains for a target domain")
 parser.add_argument('-t','--target', action="store", default=None, dest='target',
@@ -26,56 +18,85 @@ if not len(sys.argv) > 1:
 	print()
 	exit()
 
-def scanner(args, tool, cmd, outputFile):
+########## Modify these if needed ##########
+BBR_API_KEY = "bbrecon api key here"
+
+ports = (
+'80,81,300,443,591,593,832,981,1010,1311,2082,2087,2095,2096,2480,3000,3128,3333,4243,4567,4711,4712,\
+4993,5000,5104,5108,5800,6543,7000,7396,7474,8000,8001,8008,8014,8042,8069,8080,8081,8088,8090,8091,\
+8118,8123,8172,8222,8243,8280,8281,8333,8443,8500,8834,8880,8888,8983,9000,9043,9060,9080,9090,9091,\
+9200,9443,9800,9981,12443,16080,18091,18092,20720,28017')
+
+outputFiles = {
+'assetfinder': "assetfinder.{}.txt".format(args.target),
+'subfinder': "subfinder.{}.txt".format(args.target),
+'chaos': "chaos.{}.txt".format(args.target),
+'amass': "amass.{}.txt".format(args.target)}
+
+commands = {
+"assetfinder": "assetfinder --subs-only {}".format(args.target),
+"subfinder": "subfinder -d {} -o {}".format(args.target, outputFiles["subfinder"]),
+"chaos": "chaos -d {} -silent".format(args.target),
+"amass": "amass enum -active -brute -ipv4 -p {} -src -d {} -o {}".format(ports, args.target, outputFiles["amass"])}
+
+### Set the logger up
+scriptDir = sys.path[0]
+logDir = scriptDir + '/logs'
+if not os.path.exists(logDir):
+	os.makedirs(logDir)
+logName = "logs.log"
+logfilePath = os.path.join(logDir, logName)
+logging.basicConfig(filename=logfilePath, filemode='a',
+format="%(asctime)s - %(levelname)s - %(message)s")
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+##########################################
+
+def checkRequirements():
+	reqFail = 0
+	for t,c in commands.items():
+		cmd = "which {}".format(t)
+		cmdargs = shlex.split(cmd)
+		try:
+			cmdOutput = subprocess.check_output(cmdargs, encoding='UTF-8')
+		except subprocess.CalledProcessError as e:
+			if str(e).find("exit status 1") != -1:
+				print("{} not installed".format(t))
+				logger.error("{} not installed...".format(t))
+				reqFail = 1
+	return reqFail
+
+def scanner(args, cmd, outputFile):
 	scanStart=datetime.now()
 
 	if args.verbose:
 		print("Executing command: {}".format(cmd))
 	cmdargs = shlex.split(cmd)
 	cmdOutput = subprocess.check_output(cmdargs, encoding='UTF-8')
-	if tool == 'assetfinder' or tool == 'chaos':
+	if cmd == commands['assetfinder'] or cmd == commands['chaos']:
 		with open(outputFile, "w") as f:
 			f.write(cmdOutput)
-
-	logger.info("\n{} data retrieval completed in: {}\n".format(tool, datetime.now()-scanStart))
+	logger.info("\n{} data retrieval completed in: {}\n".format(cmd.split(' ')[0], datetime.now()-scanStart))
 
 def enumerateSubs():
-	outFiles = []
-	tool = 'assetfinder'
-	outputFile = "{}.{}.txt".format(tool, args.target)
-	outFiles.append(outputFile)
-	cmd = "assetfinder --subs-only {}".format(args.target)
-	scanner(args, tool, cmd, outputFile)
+	scanner(args, commands["assetfinder"], outputFiles["assetfinder"])
 
-	tool = 'subfinder'
-	outputFile = "{}.{}.txt".format(tool, args.target)
-	outFiles.append(outputFile)
-	cmd = "subfinder -d {} -o {}".format(args.target, outputFile)
-	scanner(args, tool, cmd, outputFile)
+	scanner(args, commands["subfinder"], outputFiles["subfinder"])
 
-	tool = 'chaos'
-	outputFile = "{}.{}.txt".format(tool, args.target)
-	outFiles.append(outputFile)
-	cmd = "chaos -d {} -silent".format(args.target)
 	try:
-		scanner(args, tool, cmd, outputFile)
+		scanner(args, commands["chaos"], outputFiles["chaos"])
 	except subprocess.CalledProcessError as e:
 		if str(e).find("exit status 1") != -1:
 			print("Chaos only works on TLDs. Skipping Chaos...\n")
 			logger.warning("Chaos only works on TLDs. Skipping Chaos...\n")
 
 	### may exit with non-zero error code. It may still have results. We can have it continue anyway.
-	tool = 'amass'
-	outputFile = "{}.{}.txt".format(tool, args.target)
-	outFiles.append(outputFile)
-	cmd = "amass enum -active -brute -ipv4 -p {} -src -d {} -o {}".format(ports, args.target, outputFile)
 	try:
-		scanner(args, tool, cmd, outputFile)
+		scanner(args, commands["amass"], outputFiles["amass"])
 	except subprocess.CalledProcessError as e:
 		logger.warning(e)
 
 	print ("\nAll data retrieval completed in: {}\n".format(datetime.now()-scriptStart))
-	return outFiles
 
 def bbrecon(args):
 	makeDirs = []
@@ -103,11 +124,11 @@ def bbrecon(args):
 
 	return makeDirs
 
-def makeFinal(args, outFiles):
+def makeFinal(args):
 	domains = []
-	for of in outFiles:
+	for t,o in outputFiles.items():
 		try:
-			with open(of, 'r') as of:
+			with open(o, 'r') as of:
 				data = of.read().splitlines()
 		except FileNotFoundError:
 			pass
@@ -121,26 +142,20 @@ def makeFinal(args, outFiles):
 		for fd in finalDomains:
 			ff.write('{}\n'.format(fd))
 
+reqFail = checkRequirements()
+if reqFail == 1:
+	print("""
+One or more of the requirements are not installed.
+See the log: {}.
+Exiting...""".format(logfilePath))
+	sys.exit(1)
 
 ### Start the script timer
 scriptStart=datetime.now()
 
-### Set the logger up
-scriptDir = os.path.dirname(__file__)
-logDir = scriptDir + '/logs'
-if not os.path.exists(logDir):
-	os.makedirs(logDir)
-logName = "logs.log"
-logfilePath = os.path.join(logDir, logName)
-logging.basicConfig(filename=logfilePath, filemode='a',
-format="%(asctime)s - %(levelname)s - %(message)s")
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.INFO)
-
 if args.target and not args.scope:
-	outputFile = '' # dont change this
-	outFiles = enumerateSubs()
-	makeFinal(args, outFiles)
+	enumerateSubs()
+	makeFinal(args)
 
 if args.scope and not args.target:
 	dirs = bbrecon(args)
